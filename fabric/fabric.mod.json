@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "insta_grow",
+  "version": "1.0.0",
+  "name": "Insta Grow",
+  "description": "Bone meal a sapling, or sneak-place one, and it becomes a full tree instantly.",
+  "authors": ["256ArtsDeveloper"],
+  "license": "CC0-1.0",
+  "environment": "*",
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": ">=1.21.4"
+  }
+}

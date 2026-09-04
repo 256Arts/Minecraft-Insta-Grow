@@ -1,0 +1,112 @@
+# Publishes a release's data pack zip and mod jar to Modrinth, CurseForge and the
+# GitHub release itself.
+#
+# Set up once, per platform:
+#   - Modrinth:    repo variable MODRINTH_ID (project id or slug) + secret MODRINTH_TOKEN
+#   - CurseForge:  repo variable CURSEFORGE_ID (numeric project id) + secret CURSEFORGE_TOKEN
+# mc-publish skips any platform whose token is missing, so a half-configured repo still
+# publishes to the rest.
+#
+# To release: bump "version" in fabric/fabric.mod.json, then publish a GitHub release
+# tagged v<that version>. The release's body becomes the changelog on every platform.
+
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read pack version
+        id: pack
+        run: |
+          . ./version.sh
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check the release tag matches the pack version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          VERSION: ${{ steps.pack.outputs.version }}
+        run: |
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "Release tag $TAG does not match fabric/fabric.mod.json version $VERSION (expected v$VERSION)." >&2
+            exit 1
+          fi
+
+      - name: Build
+        run: |
+          ./build-datapack-zip.sh
+          ./build-mod-jar.sh
+
+      # The zip and the jar go up as two separate versions, not one version with two
+      # files. A version's primary file is the one its loader installs, so a jar riding
+      # along in a data pack version is an uninstallable supplementary download — the
+      # Modrinth app would never offer it as a mod. Splitting them also means each
+      # version declares only its own loaders, and Modrinth only runs a loader's
+      # validator over the files of a version that declares it.
+      - name: Publish the data pack
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          files: build/insta-grow-datapack-*.zip
+
+          # "+datapack" / "+mod" are semver build metadata: same release, two version
+          # numbers, because a project cannot hold two versions with the same number.
+          version: ${{ steps.pack.outputs.version }}+datapack
+          name: ${{ steps.pack.outputs.version }} (data pack)
+
+          loaders: datapack
+          # Bounded on purpose: pack.mcmeta rejects anything past 26.2, so the
+          # advertised range must stop there too. Raise this alongside
+          # pack.mcmeta's max_format when a new version is tested.
+          game-versions: ">=1.21.4 <=26.2"
+          # A single flag value, not a list: mc-publish parses this as one
+          # LoaderEnvironmentType, and "both" means required on client and server.
+          environment: both
+
+          modrinth-id: ${{ vars.MODRINTH_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          curseforge-id: ${{ vars.CURSEFORGE_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+      - name: Publish the mod
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          # One jar, not one per loader: Modrinth runs every declared loader's
+          # validator over every file with a matching extension, so a Fabric-only
+          # jar in a version that also declares neoforge is rejected.
+          files: build/insta-grow-*.jar
+
+          version: ${{ steps.pack.outputs.version }}+mod
+          name: ${{ steps.pack.outputs.version }} (mod)
+
+          loaders: |
+            fabric
+            neoforge
+          game-versions: ">=1.21.4 <=26.2"
+          environment: both
+
+          modrinth-id: ${{ vars.MODRINTH_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          curseforge-id: ${{ vars.CURSEFORGE_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+      # A GitHub release has no loaders and no version of its own, so both artifacts
+      # hang off the one release. Kept in its own step so neither upload above renames
+      # the release to its own version name.
+      - name: Attach both artifacts to the release
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          files: |
+            build/insta-grow-datapack-*.zip
+            build/insta-grow-*.jar
+          github-token: ${{ secrets.GITHUB_TOKEN }}

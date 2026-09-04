@@ -1,0 +1,28 @@
+# NeoForge's metadata for the same files the data pack zip ships. lowcodefml is the
+# language loader for mods with no Java entrypoint, which is exactly what this is:
+# NeoForge reads a mod jar's data/ directory as an always-on data pack.
+# @VERSION@ is substituted by build-neoforge-jar.sh from fabric/fabric.mod.json.
+modLoader = "lowcodefml"
+loaderVersion = "[1,)"
+license = "CC0-1.0"
+
+[[mods]]
+modId = "insta_grow"
+version = "@VERSION@"
+displayName = "Insta Grow"
+description = "Bone meal a sapling, or sneak-place one, and it becomes a full tree instantly."
+authors = "256ArtsDeveloper"
+
+[[dependencies.insta_grow]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.4.0-beta,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.insta_grow]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.4,)"
+ordering = "NONE"
+side = "BOTH"
