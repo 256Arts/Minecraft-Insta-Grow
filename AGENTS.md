@@ -78,11 +78,11 @@ range in `depends.minecraft`, `neoforge/neoforge.mods.toml` (both `versionRange`
 
 `.github/workflows/publish.yml` runs on `release: published`. It fails the release if
 the tag is not `v<fabric.mod.json version>`, builds both artifacts, and runs
-`Kira-NT/mc-publish` three times: the zip as Modrinth/CurseForge version
-`<version>+datapack` (loader `datapack`), the jar as `<version>+mod` (loaders `fabric`,
-`neoforge`), and both files onto the GitHub release. The mod is a separate version
-because a Modrinth version installs its primary file only — a jar attached to a data
-pack version is a supplementary download nothing can install — and a project cannot
+`Kira-NT/mc-publish` three times: the zip as Modrinth version `<version>+datapack`
+(loader `datapack`), the jar as Modrinth/CurseForge version `<version>+mod` (loaders
+`fabric`, `neoforge`), and both files onto the GitHub release. The mod is a separate
+version because a Modrinth version installs its primary file only — a jar attached to a
+data pack version is a supplementary download nothing can install — and a project cannot
 hold two versions with the same number, hence the semver build suffixes. The GitHub
 upload is its own step so neither site step renames the release to its version name.
 `loaders`, `game-versions` (`>=1.21.4 <=26.2`, a fourth copy of the range in
@@ -93,3 +93,13 @@ metadata from one file only, and half of what ships here is a bare zip. Modrinth
 CurseForge come from `vars.MODRINTH_ID` / `vars.CURSEFORGE_ID` plus the matching
 secrets; mc-publish skips a platform whose token is unset, so an unconfigured repo
 still publishes to the GitHub release.
+
+The data pack step is Modrinth-only on purpose. mc-publish appends CurseForge's
+Client/Server ids from the environment group only when it also resolved at least one
+mod loader id (`loaderIds.length ? gameVersionIds.concat(loaderIds, environmentIds,
+javaIds) : gameVersionIds` in `curseforge-upload-api-client.ts`), `datapack` is not a
+CurseForge loader, and only the first id variant is ever attempted — so sending the zip
+to CurseForge fails the whole workflow with `errorCode 1021, "You must select at least
+one version from the environment group of versions"` before Modrinth or the GitHub
+upload run. The jar declares `fabric` and `neoforge`, so it resolves loaders and carries
+the environment ids fine; CurseForge users install the jar.

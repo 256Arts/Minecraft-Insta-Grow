@@ -74,8 +74,17 @@ jobs:
           modrinth-id: ${{ vars.MODRINTH_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
-          curseforge-id: ${{ vars.CURSEFORGE_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          # Deliberately no CurseForge here. mc-publish only sends CurseForge's
+          # Client/Server ids from the environment group when it also resolved at
+          # least one mod loader id — `loaderIds.length ? gameVersionIds.concat(
+          # loaderIds, environmentIds, javaIds) : gameVersionIds` in
+          # curseforge-upload-api-client.ts — and "datapack" is not a CurseForge
+          # loader, so it resolves to nothing. The upload then arrives with no entry
+          # from the environment group and CurseForge rejects the whole run with
+          # errorCode 1021. Only the first id variant is ever tried, so there is no
+          # fallback to recover from it. The jar below declares fabric and neoforge,
+          # resolves loaders, and publishes to CurseForge fine — that is what
+          # CurseForge users install anyway.
 
       - name: Publish the mod
         uses: Kira-NT/mc-publish@v3.3.1
