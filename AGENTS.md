@@ -1,11 +1,19 @@
 # Insta Grow — data pack
 
-Minecraft Java 1.21.4 - 26.2 data pack. Namespace `insta_grow`. Repo root is the pack
-root. `pack.mcmeta` carries all three of `pack_format` (pre-1.21.9),
-`supported_formats` and `min_format` / `max_format` (1.21.9+, floats, 26.2 = 107.1).
-All three are needed: a `pack_format` of 81 or lower without `supported_formats` is
-rejected, and `supported_formats`' `max_inclusive` must match `max_format`'s major
-version or the metadata does not parse at all.
+Minecraft Java 26.3 data pack. Namespace `insta_grow`. Repo root is the pack root.
+`pack.mcmeta` carries `min_format` / `max_format` only (floats, 26.3 = 121.0);
+`pack_format` and `supported_formats` are the pre-1.21.9 spelling and are deliberately
+absent, because they are only required below format 82. 26.3 rewrote the
+loot-condition and advancement schemas — `type` instead of `condition`, and a single
+condition object where a list used to go — so the pack cannot support 26.2 and 26.3
+from one set of files. Overlays cannot bridge it either: an overlay entry needs
+`formats` below format 82 and is rejected for carrying it at 82 and above.
+That is why `min_format` sits on 26.3 as well: **backwards compatibility is worth no
+extra work.** Widen the range for free when a version bump changes no files, but the
+moment one has to be edited, move `min_format` up and drop the old versions rather than
+maintaining two shapes — every previously shipped release stays downloadable from
+Modrinth, CurseForge and GitHub releases, so players on an older Minecraft just install
+the older file.
 No tick function — detection is advancement-driven.
 
 Both advancements use `item_used_on_block` and share the same reward shape: revoke
@@ -17,7 +25,9 @@ self (required to re-arm the criterion), then raycast.
   sneaking. Reward `function/on_sneak_place`.
 - `function/ray/*` — 26 x 0.2 block ray from the eyes; first block in
   `#insta_grow:growable` wins, stops at anything not in `#insta_grow:ray_passable`.
-- `function/dispatch` — sapling block id -> `grow/*`.
+- `function/dispatch` — sapling block id -> `grow/*`. A literal block id that does not
+  exist on the running version stops the whole function from loading, so this file is
+  the one place a version bump can break silently at load time.
 - `function/grow/place` and `grow/mega*` — macro functions; args `block` + `feature`.
   They clear the sapling, `place feature`, and restore it if placement failed.
   `#done insta_grow.tmp` is the "a tree was placed" flag; `dispatch` resets it.
@@ -37,12 +47,21 @@ self (required to re-arm the criterion), then raycast.
 - `dimension/scratch` + `dimension_type/scratch` — a void flat dimension, y 0..47,
   scratch space for the clone above. `load` runs `forceload add 0 0` in it so the
   clone always has a loaded target; the box is anchored at 0 0 0 and `s` maxes out at
-  9, so it stays inside chunk 0 0.
+  12 (`grow/poplar`), so it stays inside chunk 0 0.
 - `function/grow/try` — args `block`, `feature`, `w`, `s`, `h`: `place`, then
   `force`. The whole chain for a one-sapling tree, called straight from `dispatch`.
 
-Feature ids are passed as macro strings, so a name that does not exist on the
-running version fails silently instead of breaking function loading.
+Feature ids are passed as macro strings, so a name that does not exist on the running
+version fails silently instead of breaking function loading. Sapling ids reached
+through a macro (`$(block)`, for the restore) are safe for the same reason — only a
+literal id in a non-macro command is a load-time hazard.
+
+`grow/poplar` rolls the leaf colour up front (`chance_33`, then `chance_50` on the
+remainder) and hands the chosen one to `grow/try`, so the forced attempt keeps that
+colour rather than always landing on the last branch. The `w:6`/`s:12` box is the
+widest the scratch dimension can take — `load` force-loads chunk 0 0 only, so `s`
+cannot exceed 15 — and it covers the common canopy radii; the rare radius-7/8 roll
+just fails to place and is restored, as any tree that still does not fit is.
 
 A plain right-click on a planted sapling is not detectable today, hence the bone meal
 and sneak-place triggers. README has a test for whether `any_block_use` has changed
@@ -72,9 +91,13 @@ at. The manifests are inert where they are not read — each loader ignores the 
 
 No Java, no Gradle, no Loom, no compiler: both loaders treat a mod jar's `data/` as an
 always-on data pack, and NeoForge's `lowcodefml` language loader is made for mods with
-no Java entrypoint. Bump the version in `fabric/fabric.mod.json`; bump the supported
-range in `depends.minecraft`, `neoforge/neoforge.mods.toml` (both `versionRange`s) and
-`pack.mcmeta` together.
+no Java entrypoint. **Fabric API is required** — Fabric Loader 0.19.5 ships no
+mod-resource-pack code at all, so without `fabric-resource-loader-v0` the mod loads and
+its `data/` is ignored in total silence. Hence the `fabric-resource-loader-v0`
+dependency in `fabric/fabric.mod.json`; it turns that into a refusal to launch.
+NeoForge needs no equivalent. Bump the version in `fabric/fabric.mod.json`; bump the
+supported range in `depends.minecraft`, `neoforge/neoforge.mods.toml` (both
+`versionRange`s) and `pack.mcmeta` together.
 
 `.github/workflows/publish.yml` runs on `release: published`. It fails the release if
 the tag is not `v<fabric.mod.json version>`, builds both artifacts, and runs
@@ -85,8 +108,8 @@ version because a Modrinth version installs its primary file only — a jar atta
 data pack version is a supplementary download nothing can install — and a project cannot
 hold two versions with the same number, hence the semver build suffixes. The GitHub
 upload is its own step so neither site step renames the release to its version name.
-`loaders`, `game-versions` (`>=1.21.4 <=26.2`, a fourth copy of the range in
-`pack.mcmeta` — bump it with the others) and `environment` (`both` — a single flag
+`loaders`, `game-versions` (`26.3`, a third copy of the version in `pack.mcmeta` —
+bump it with the others) and `environment` (`both` — a single flag
 value, not a list, or the run dies on `Cannot convert "environment" to
 "LoaderEnvironmentType"`) are all explicit rather than inferred: mc-publish reads
 metadata from one file only, and half of what ships here is a bare zip. Modrinth and

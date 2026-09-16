@@ -63,10 +63,10 @@ jobs:
           name: ${{ steps.pack.outputs.version }} (data pack)
 
           loaders: datapack
-          # Bounded on purpose: pack.mcmeta rejects anything past 26.2, so the
-          # advertised range must stop there too. Raise this alongside
-          # pack.mcmeta's max_format when a new version is tested.
-          game-versions: ">=1.21.4 <=26.2"
+          # A single version, not a range: the loot-condition and advancement
+          # schemas changed in 26.3, so the pack is 26.3-only. Raise this alongside
+          # pack.mcmeta's min_format / max_format when a new version is tested.
+          game-versions: "26.3"
           # A single flag value, not a list: mc-publish parses this as one
           # LoaderEnvironmentType, and "both" means required on client and server.
           environment: both
@@ -100,7 +100,7 @@ jobs:
           loaders: |
             fabric
             neoforge
-          game-versions: ">=1.21.4 <=26.2"
+          game-versions: "26.3"
           environment: both
 
           modrinth-id: ${{ vars.MODRINTH_ID }}

@@ -20,6 +20,7 @@ farms and sapling storage all behave exactly as they do in vanilla.
 | Mangrove propagule | Mangrove, 15% chance of the tall one |
 | Spruce | Spruce; a 2x2 grows a mega spruce or pine |
 | Jungle | Jungle tree; a 2x2 grows a mega jungle tree |
+| Poplar | Red, orange or yellow poplar, one at random |
 | Dark oak, Pale oak | 2x2 only, same as vanilla |
 
 For the 2x2 trees, plant all four saplings normally and bone meal any one of
@@ -85,10 +86,13 @@ leaves that dimension's (empty) region files behind, which is harmless.
 
 One jar covers both loaders: each ignores the other's metadata file, so it
 carries `fabric.mod.json` and `META-INF/neoforge.mods.toml` side by side. Needs
-Fabric Loader 0.15 or newer, or NeoForge for 1.21.4 or newer. Fabric API is not
-required, and neither is a compiler — both loaders read the `data/` directory of
-any mod jar as a data pack, and NeoForge's `lowcodefml` language loader exists
-precisely so a mod can ship without a Java entrypoint. There is no Java in it.
+Fabric Loader 0.19 or newer plus **Fabric API**, or NeoForge for 26.3 or newer.
+Fabric Loader no longer reads a mod jar's `data/` itself — Fabric API's resource
+loader is what does it, and without Fabric API the mod loads and does nothing at
+all, silently — so the jar declares `fabric-resource-loader-v0` as a dependency
+and Fabric refuses to start rather than pretending. NeoForge needs no add-on:
+its `lowcodefml` language loader exists precisely so a mod can ship without a
+Java entrypoint. No compiler either — there is no Java in it.
 
 The mod applies to every world at once instead of per world, and its data pack
 is always on, so `/datapack disable` cannot turn it off — remove the jar
@@ -97,16 +101,18 @@ version floor comes from `depends.minecraft` in `fabric/fabric.mod.json` and the
 `versionRange`s in `neoforge/neoforge.mods.toml` rather than from `pack.mcmeta`;
 keep them in step.
 
-Requires **Minecraft Java 1.21.4 or newer**, up to 26.2.
+Requires **Minecraft Java 26.3**.
 
-`pack.mcmeta` declares the range three times on purpose. `pack_format` is the
-1.21.4 number, `supported_formats` is the span the versions between want, and
-`min_format` / `max_format` are what 1.21.9 and later read. All three are
-required together: a pack whose `pack_format` is 81 or lower is rejected without
-`supported_formats`, and `supported_formats`' upper bound has to agree with
-`max_format`, or the metadata fails to parse and the pack falls back to being
-treated as a 1.6-era pack. Raise `max_format` and the `max_inclusive` beside it
-together as new versions land — 26.2 is data pack format 107.1.
+26.3 rewrote the schemas this pack's advancements and predicates are written in
+— `type` where `condition` used to go, and a single condition where a list used
+to — so one set of files cannot serve both 26.2 and 26.3, and a `pack.mcmeta`
+overlay cannot bridge them either (an overlay entry needs a `formats` key below
+pack format 82 and is rejected for carrying one at 82 and above). Earlier
+versions are therefore served by release 1.0.0, which stays up.
+
+`pack.mcmeta` carries `min_format` and `max_format` and nothing else. The older
+`pack_format` / `supported_formats` pair is only required below format 82, and
+26.3 is data pack format 121.0. Raise both as new versions land.
 
 ## How it works
 
@@ -125,8 +131,8 @@ block that was there over the top of the new tree.
 Both artifacts and all three distribution channels come from one GitHub release.
 
 1. Bump `version` in `fabric/fabric.mod.json`, and `depends.minecraft`, the
-   `neoforge/neoforge.mods.toml` version ranges and the `pack.mcmeta` format
-   numbers if the supported range moved.
+   `neoforge/neoforge.mods.toml` version ranges, the `pack.mcmeta` format
+   numbers and `game-versions` in the workflow if the supported version moved.
 2. Publish a GitHub release tagged `v<that version>`. Its body becomes the
    changelog everywhere.
 
@@ -157,9 +163,9 @@ The zip and the jar go up as two versions, not one. A Modrinth version installs
 its primary file, so a jar riding along in a data pack version is a download
 nothing can install; the data pack becomes version `<version>+datapack` with the
 `datapack` loader and the mod becomes `<version>+mod` with `fabric` and
-`neoforge`. Both declare a game version range of `>=1.21.4 <=26.2`, a third copy
-of the ceiling in `pack.mcmeta` — raise `game-versions` in the workflow whenever
-you raise `max_format` and `max_inclusive`.
+`neoforge`. Both declare a game version of `26.3`, a second copy of the version
+in `pack.mcmeta` — raise `game-versions` in the workflow whenever you raise
+`min_format` and `max_format`.
 
 Fabric and NeoForge share one jar rather than shipping two because Modrinth runs
 every validator whose loader the version declares over every file in it with a

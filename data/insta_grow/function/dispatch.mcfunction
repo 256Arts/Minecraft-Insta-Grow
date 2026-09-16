@@ -10,3 +10,4 @@ execute if block ~ ~ ~ minecraft:spruce_sapling run function insta_grow:grow/spr
 execute if block ~ ~ ~ minecraft:jungle_sapling run function insta_grow:grow/jungle
 execute if block ~ ~ ~ minecraft:dark_oak_sapling run function insta_grow:grow/dark_oak
 execute if block ~ ~ ~ minecraft:pale_oak_sapling run function insta_grow:grow/pale_oak
+execute if block ~ ~ ~ minecraft:poplar_sapling run function insta_grow:grow/poplar

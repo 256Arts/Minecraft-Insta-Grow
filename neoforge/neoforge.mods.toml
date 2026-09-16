@@ -16,13 +16,13 @@ authors = "256ArtsDeveloper"
 [[dependencies.insta_grow]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.4.0-beta,)"
+versionRange = "[26.3.0-beta,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.insta_grow]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.4,)"
+versionRange = "[26.3,)"
 ordering = "NONE"
 side = "BOTH"

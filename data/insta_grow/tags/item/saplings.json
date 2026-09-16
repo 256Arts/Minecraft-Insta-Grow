@@ -10,6 +10,7 @@
     "minecraft:mangrove_propagule",
     "minecraft:azalea",
     "minecraft:flowering_azalea",
-    { "id": "minecraft:pale_oak_sapling", "required": false }
+    "minecraft:pale_oak_sapling",
+    "minecraft:poplar_sapling"
   ]
 }
