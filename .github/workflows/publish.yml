@@ -5,16 +5,19 @@
 #   - Modrinth:    repo variable MODRINTH_ID (project id or slug) + secret MODRINTH_TOKEN
 #   - CurseForge:  repo variable CURSEFORGE_ID (numeric project id) + secret CURSEFORGE_TOKEN
 # mc-publish skips any platform whose token is missing, so a half-configured repo still
-# publishes to the rest.
+# publishes to the rest. Each token is gated on its id: the tokens are organization
+# secrets, and handed a token with no id mc-publish guesses a slug and fails the run.
 #
-# To release: bump "version" in fabric/fabric.mod.json, then publish a GitHub release
-# tagged v<that version>. The release's body becomes the changelog on every platform.
+# To release: bump "version" in fabric/fabric.mod.json, push to main, then run
+# release.sh, which pushes a v<that version> tag. The last step creates the GitHub
+# release with generated notes.
 
 name: Publish
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   publish:
@@ -33,7 +36,7 @@ jobs:
 
       - name: Check the release tag matches the pack version
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.pack.outputs.version }}
         run: |
           if [ "$TAG" != "v$VERSION" ]; then
@@ -72,7 +75,7 @@ jobs:
           environment: both
 
           modrinth-id: ${{ vars.MODRINTH_ID }}
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-token: ${{ vars.MODRINTH_ID != '' && secrets.MODRINTH_TOKEN || '' }}
 
           # Deliberately no CurseForge here. mc-publish only sends CurseForge's
           # Client/Server ids from the environment group when it also resolved at
@@ -104,18 +107,23 @@ jobs:
           environment: both
 
           modrinth-id: ${{ vars.MODRINTH_ID }}
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-token: ${{ vars.MODRINTH_ID != '' && secrets.MODRINTH_TOKEN || '' }}
 
           curseforge-id: ${{ vars.CURSEFORGE_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-token: ${{ vars.CURSEFORGE_ID != '' && secrets.CURSEFORGE_TOKEN || '' }}
 
       # A GitHub release has no loaders and no version of its own, so both artifacts
-      # hang off the one release. Kept in its own step so neither upload above renames
-      # the release to its own version name.
-      - name: Attach both artifacts to the release
+      # hang off the one release. Kept in its own step so neither upload above creates
+      # or renames it.
+      - name: Publish the GitHub release
         uses: Kira-NT/mc-publish@v3.3.1
         with:
           files: |
             build/insta-grow-datapack-*.zip
             build/insta-grow-*.jar
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.ref_name }}
+          github-generate-changelog: true
+          name: Insta Grow ${{ steps.pack.outputs.version }}
+          version: ${{ steps.pack.outputs.version }}
+          version-type: release

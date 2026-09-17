@@ -99,15 +99,17 @@ NeoForge needs no equivalent. Bump the version in `fabric/fabric.mod.json`; bump
 supported range in `depends.minecraft`, `neoforge/neoforge.mods.toml` (both
 `versionRange`s) and `pack.mcmeta` together.
 
-`.github/workflows/publish.yml` runs on `release: published`. It fails the release if
-the tag is not `v<fabric.mod.json version>`, builds both artifacts, and runs
+`.github/workflows/publish.yml` runs on a `v*` tag push, which `release.sh` (the
+`Release` Conductor run script) makes: it tags `origin/main` with the
+`fabric.mod.json` version, refusing one already tagged, and watches the run. The
+workflow fails if the tag is not `v<fabric.mod.json version>`, builds both artifacts, and runs
 `Kira-NT/mc-publish` three times: the zip as Modrinth version `<version>+datapack`
 (loader `datapack`), the jar as Modrinth/CurseForge version `<version>+mod` (loaders
 `fabric`, `neoforge`), and both files onto the GitHub release. The mod is a separate
 version because a Modrinth version installs its primary file only — a jar attached to a
 data pack version is a supplementary download nothing can install — and a project cannot
 hold two versions with the same number, hence the semver build suffixes. The GitHub
-upload is its own step so neither site step renames the release to its version name.
+release is its own last step, with generated notes, so neither site step names it.
 `loaders`, `game-versions` (`26.3`, a third copy of the version in `pack.mcmeta` —
 bump it with the others) and `environment` (`both` — a single flag
 value, not a list, or the run dies on `Cannot convert "environment" to
