@@ -11,4 +11,4 @@ stage_pack mod
 cp fabric/fabric.mod.json "$staging/"
 mkdir -p "$staging/META-INF"
 sed "s/@VERSION@/$version/" neoforge/neoforge.mods.toml > "$staging/META-INF/neoforge.mods.toml"
-pack_archive "insta-grow-$version.jar"
+pack_archive "insta-grow-$version+$minecraft.jar"

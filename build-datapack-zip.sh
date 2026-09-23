@@ -6,4 +6,4 @@ set -eu
 . ./pack-lib.sh
 
 stage_pack datapack
-pack_archive "insta-grow-datapack-$version.zip"
+pack_archive "insta-grow-datapack-$version+$minecraft.zip"

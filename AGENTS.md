@@ -72,8 +72,8 @@ sources `version.sh` (the one version number lives in `fabric/fabric.mod.json`) 
 exposes `stage_pack <dir>` plus `pack_archive <name>` (zip it). Run them from the repo
 root.
 
-- `build-datapack-zip.sh` — `insta-grow-datapack-<version>.zip`.
-- `build-mod-jar.sh` — `insta-grow-<version>.jar`, for Fabric and NeoForge both.
+- `build-datapack-zip.sh` — `insta-grow-datapack-<version>+<minecraft>.zip`.
+- `build-mod-jar.sh` — `insta-grow-<version>+<minecraft>.jar`, for Fabric and NeoForge both.
 
 `install-in-modrinth.sh [profile]` builds the jar and drops it into a local Modrinth
 App profile's `mods/` (default `Latest Fabric`), clearing older `insta-grow-*.jar`
@@ -110,8 +110,8 @@ version because a Modrinth version installs its primary file only — a jar atta
 data pack version is a supplementary download nothing can install — and a project cannot
 hold two versions with the same number, hence the semver build suffixes. The GitHub
 release is its own last step, with generated notes, so neither site step names it.
-`loaders`, `game-versions` (`26.3`, a third copy of the version in `pack.mcmeta` —
-bump it with the others) and `environment` (`both` — a single flag
+`loaders`, `game-versions` (`minecraft` from `version.sh`, which also suffixes both
+file names — bump it with `pack.mcmeta`) and `environment` (`both` — a single flag
 value, not a list, or the run dies on `Cannot convert "environment" to
 "LoaderEnvironmentType"`) are all explicit rather than inferred: mc-publish reads
 metadata from one file only, and half of what ships here is a bare zip. Modrinth and

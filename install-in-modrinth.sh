@@ -11,7 +11,7 @@ mods="$HOME/Library/Application Support/ModrinthApp/profiles/$profile/mods"
 sh build-mod-jar.sh
 
 . ./version.sh
-jar="build/insta-grow-$version.jar"
+jar="build/insta-grow-$version+$minecraft.jar"
 
 # Drop every old build, including .disabled ones, so no duplicate mod id loads.
 find "$mods" -maxdepth 1 \( -name 'insta-grow-*.jar' -o -name 'insta-grow-*.jar.disabled' \) \

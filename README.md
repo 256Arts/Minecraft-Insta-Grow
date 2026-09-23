@@ -73,7 +73,7 @@ leaves that dimension's (empty) region files behind, which is harmless.
 
 1. Download the zip from the [latest release](../../releases/latest), or clone
    this repo and run `./build-datapack-zip.sh` to produce
-   `build/insta-grow-datapack-<version>.zip`.
+   `build/insta-grow-datapack-<version>+<minecraft>.zip`.
 2. Drop the zip (or the folder containing `pack.mcmeta`) into
    `<your world>/datapacks/`.
 3. In game, run `/reload`, or restart the world.
@@ -81,7 +81,7 @@ leaves that dimension's (empty) region files behind, which is harmless.
 ### As a Fabric or NeoForge mod
 
 1. Download the jar from the [latest release](../../releases/latest), or run
-   `./build-mod-jar.sh` to produce `build/insta-grow-<version>.jar`.
+   `./build-mod-jar.sh` to produce `build/insta-grow-<version>+<minecraft>.jar`.
 2. Put it in your `mods/` folder, client or server.
 
 One jar covers both loaders: each ignores the other's metadata file, so it
@@ -163,9 +163,8 @@ The zip and the jar go up as two versions, not one. A Modrinth version installs
 its primary file, so a jar riding along in a data pack version is a download
 nothing can install; the data pack becomes version `<version>+datapack` with the
 `datapack` loader and the mod becomes `<version>+mod` with `fabric` and
-`neoforge`. Both declare a game version of `26.3`, a second copy of the version
-in `pack.mcmeta` — raise `game-versions` in the workflow whenever you raise
-`min_format` and `max_format`.
+`neoforge`. Both declare the game version `minecraft` in `version.sh`, which also
+suffixes the file names — raise it whenever you raise `max_format`.
 
 Fabric and NeoForge share one jar rather than shipping two because Modrinth runs
 every validator whose loader the version declares over every file in it with a
